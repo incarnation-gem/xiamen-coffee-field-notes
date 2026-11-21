@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#173b32">
+  <title>厦门咖啡展现场调研</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182c26;
+      --muted: #4e6359;
+      --forest: #173b32;
+      --action: #245b48;
+      --action-hover: #1a4738;
+      --paper: #fffef9;
+      --page: #f1f3ee;
+      --field: #f6f7f1;
+      --selected: #e6efdf;
+      --line: #d3dcd1;
+      --control: #8a9d90;
+      --lime: #dff395;
+      --warning: #7c3b29;
+      --gutter: clamp(1rem, 4vw, 2.5rem);
+      font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--ink); line-height: 1.55; }
+    [hidden] { display: none !important; }
+    a { color: var(--action); text-underline-offset: .23em; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: default; opacity: .55; }
+    :focus-visible { outline: 3px solid #668d52; outline-offset: 3px; }
+    ::selection { background: var(--lime); color: var(--forest); }
+    html { scroll-padding-block: 1rem; }
+    .wrap { max-width: 68rem; margin-inline: auto; padding-inline: var(--gutter); }
+
+    .masthead { background: var(--forest); color: var(--paper); }
+    .masthead .wrap { padding-block: 2.6rem 2.25rem; }
+    .masthead h1 { margin: 0; font-size: 2.65rem; line-height: 1.15; letter-spacing: -.035em; }
+    .event-meta { display: flex; flex-wrap: wrap; gap: .12rem .65rem; margin: .65rem 0 0; color: #d3e2d7; font-size: .95rem; }
+    .topline { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .jump {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem;
+      flex: none; border: 1px solid #a3beac; border-radius: 8px; padding-inline: .85rem;
+      color: var(--paper); font-size: .88rem; text-decoration: none;
+    }
+    .jump:hover { background: #294b41; }
+    .jump:focus-visible { outline-color: var(--lime); }
+
+    .layout { display: grid; grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr); gap: 2rem; align-items: start; padding-block: 1.65rem 3rem; }
+    .route { position: sticky; top: 1.25rem; min-width: 0; }
+    .route-head { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; }
+    .route h2, .section-title { font-size: 1.25rem; line-height: 1.35; margin: 0; letter-spacing: -.02em; }
+    .counter { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    progress { display: block; width: 100%; height: .35rem; border: 0; border-radius: 1rem; margin: .55rem 0 .8rem; appearance: none; background: var(--line); }
+    progress::-webkit-progress-bar { background: var(--line); border-radius: 1rem; }
+    progress::-webkit-progress-value { background: var(--action); border-radius: 1rem; }
+    progress::-moz-progress-bar { background: var(--action); border-radius: 1rem; }
+    .map {
+      display: flex; align-items: center; gap: .6rem; min-height: 2.75rem; font-size: .88rem;
+      color: var(--action); margin-block: .1rem .35rem; text-decoration: none;
+    }
+    .map:hover { text-decoration: underline; }
+    .map-label { color: var(--muted); font-size: .8rem; }
+    .route-list { list-style: none; margin: 0; padding: 0; border-block: 1px solid var(--line); }
+    .route-list li + li { border-top: 1px solid var(--line); }
+    .stop-button {
+      border: 0; background: transparent; color: var(--ink); width: 100%; text-align: left;
+      min-height: 3.4rem; padding: .6rem .65rem; display: grid; grid-template-columns: 2.75rem 1fr 1.2rem;
+      gap: .5rem; align-items: center; border-radius: 0;
+    }
+    .stop-button:hover { background: #e9eee5; }
+    .stop-button[aria-current="true"] { background: var(--selected); }
+    .stop-button:focus-visible { position: relative; outline-offset: -2px; }
+    .stop-time { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+    .stop-name { font-size: .925rem; font-weight: 680; line-height: 1.35; }
+    .stop-state { width: .92rem; height: .92rem; border: 1px solid var(--control); border-radius: 50%; justify-self: end; position: relative; }
+    .stop-state[data-state="started"] { border-color: var(--action); background: var(--lime); }
+    .stop-state[data-state="done"] { border-color: var(--action); background: var(--action); }
+    .stop-state[data-state="done"]::after {
+      content: ""; position: absolute; width: .43rem; height: .25rem; left: .21rem; top: .22rem;
+      border-left: 1.5px solid white; border-bottom: 1.5px solid white; transform: rotate(-45deg);
+    }
+
+    .sheet { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 1.55rem; min-width: 0; }
+    .sheet + .sheet { margin-top: 1.3rem; }
+    .visit-head { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: .6rem 1rem; }
+    .visit-head h2 { font-size: 1.65rem; line-height: 1.25; margin: 0; letter-spacing: -.025em; }
+    .visit-head p { margin: .35rem 0 0; color: var(--muted); font-size: .875rem; }
+    .duration { font-size: .8rem; color: var(--action); background: var(--selected); padding: .26rem .55rem; border-radius: 5px; font-variant-numeric: tabular-nums; }
+    .objective { margin: .75rem 0 1rem; color: var(--ink); max-width: 36rem; }
+    .form-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: .75rem; }
+    .field-label { display: block; font-size: .86rem; font-weight: 680; margin-bottom: .3rem; }
+    input[type="text"], select, textarea {
+      width: 100%; min-width: 0; border: 1px solid var(--control); border-radius: 8px;
+      background: var(--field); color: var(--ink); padding: .68rem .72rem; font-size: 1rem; caret-color: var(--action);
+    }
+    input[type="text"], select { min-height: 2.85rem; }
+    textarea { display: block; min-height: 5rem; resize: vertical; line-height: 1.55; }
+    textarea::placeholder, input::placeholder { opacity: 1; color: var(--muted); }
+    input:focus, select:focus, textarea:focus { background: var(--paper); border-color: var(--action); }
+    .questions { list-style: none; padding: 0; margin: 1.1rem 0 0; border-top: 1px solid var(--line); }
+    .question { padding: 1rem 0; border-bottom: 1px solid var(--line); }
+    .question-title { display: grid; grid-template-columns: 1.5rem 1fr; gap: .4rem; font-weight: 700; line-height: 1.45; }
+    .question-number { color: var(--action); font-variant-numeric: tabular-nums; }
+    .hint { margin: .27rem 0 .55rem 1.9rem; color: var(--muted); font-size: .85rem; max-width: 36rem; }
+    .extra { margin-top: 1rem; }
+    .extra summary, .export-preview summary { cursor: pointer; color: var(--action); font-weight: 650; padding: .62rem 0; }
+    .visit-actions { display: flex; justify-content: space-between; align-items: center; gap: .65rem; flex-wrap: wrap; margin-top: 1rem; }
+    .check { display: inline-flex; align-items: center; min-height: 2.75rem; gap: .5rem; font-weight: 670; cursor: pointer; }
+    .check input { width: 1.22rem; height: 1.22rem; margin: 0; accent-color: var(--action); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: .57rem .9rem; min-height: 2.75rem; font-size: .9rem; font-weight: 680; border-radius: 8px; border: 1px solid var(--action); color: var(--action); background: transparent; }
+    .btn:hover:not(:disabled) { background: var(--selected); }
+    .btn.primary { background: var(--action); color: white; }
+    .btn.primary:hover:not(:disabled) { background: var(--action-hover); }
+    .tools { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
+    .status { margin: .65rem 0 0; min-height: 1.3em; color: var(--muted); font-size: .835rem; }
+    .status[data-error="true"] { color: var(--warning); }
+    .summary-fields { display: grid; gap: .85rem; margin-top: .85rem; }
+    .export-preview { margin-top: .65rem; }
+    .export-preview textarea { min-height: 11rem; }
+    .summary-intro { color: var(--muted); font-size: .9rem; margin: .4rem 0 0; }
+    .network { display: block; margin-top: .75rem; font-size: .84rem; color: var(--muted); }
+    .network[data-error="true"] { color: var(--warning); }
+    .no-script { padding-block: 1rem; color: var(--warning); }
+
+    @media (max-width: 730px) {
+      .masthead .wrap { padding-block: 1.4rem 1.25rem; }
+      .masthead h1 { font-size: 1.9rem; }
+      .event-meta { font-size: .85rem; }
+      .topline { gap: .55rem; }
+      .jump { padding-inline: .56rem; }
+      .layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding-block: 1rem 2rem; }
+      .route { position: static; }
+      .route-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+      .route-list li + li { border-top: 0; }
+      .route-list li:nth-child(n + 3) { border-top: 1px solid var(--line); }
+      .route-list li:nth-child(even) { border-left: 1px solid var(--line); }
+      .stop-button { grid-template-columns: 1fr 1rem; gap: .1rem .25rem; min-height: 3.45rem; }
+      .stop-time { grid-column: 1; }
+      .stop-name { grid-column: 1; }
+      .stop-state { grid-column: 2; grid-row: 1 / span 2; }
+      .sheet { padding: 1rem; }
+      .visit-head h2 { font-size: 1.4rem; }
+      .sheet + .sheet { margin-top: 1rem; }
+      .network { margin-top: .5rem; }
+    }
+
+    @media (max-width: 365px) {
+      .masthead h1 { font-size: 1.65rem; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap topline">
+      <div>
+        <h1>厦门咖啡展现场调研</h1>
+        <p class="event-meta"><span>11 月 22 日周日 · 09:00–12:00</span><span>厦门国际会展中心 A3–A4 馆</span></p>
+      </div>
+      <a class="jump" href="#summary">导出记录</a>
+    </div>
+  </header>
+  <noscript><p class="wrap no-script">请用浏览器打开并启用 JavaScript，以填写和保存走访记录。</p></noscript>
+  <div class="wrap layout">
+    <nav class="route" aria-labelledby="route-title">
+      <div class="route-head">
+        <h2 id="route-title">走访待办</h2>
+        <span class="counter" id="count">已完成 0 / 4</span>
+      </div>
+      <progress id="progress" max="4" value="0" aria-label="走访完成进度"></progress>
+      <a class="map" href="https://www.xiaohongshu.com/user/profile/6073fb500000000001008666" target="_blank" rel="noopener noreferrer">
+        找展位图 <span class="map-label">主办方逛展指南第 3 张</span>
+      </a>
+      <ul class="route-list" id="route-list"></ul>
+      <span class="network" id="network" role="status">记录保存在这台设备的当前浏览器。</span>
+    </nav>
+
+    <main>
+      <section class="sheet" id="visit" aria-labelledby="visit-title" hidden></section>
+      <section class="sheet" id="summary" aria-labelledby="summary-title">
+        <h2 class="section-title" id="summary-title">中午收尾</h2>
+        <p class="summary-intro">记下现场最重要的变化，导出已填写的走访记录。</p>
+        <div class="summary-fields">
+          <label>
+            <span class="field-label">哪件事改变了你原先的判断？</span>
+            <textarea id="insight" rows="2" placeholder="一条亲眼所见，或两家说法的差异"></textarea>
+          </label>
+          <label>
+            <span class="field-label">项目可行性有什么初步判断？</span>
+            <textarea id="project" rows="2" placeholder="在哪个使用场景值得小试，还有哪一个数字需要确认"></textarea>
+          </label>
+          <label>
+            <span class="field-label">这条学习行程值得再组织吗？</span>
+            <textarea id="trip" rows="2" placeholder="上午学到了什么，接下来最想去哪家看厂或复访"></textarea>
+          </label>
+        </div>
+        <div class="tools">
+          <button type="button" class="btn primary" id="copy" disabled>复制调研记录</button>
+          <button type="button" class="btn" id="download" disabled>下载 Markdown</button>
+        </div>
+        <p class="status" id="export-status" role="status">填写一条记录或勾选一站后即可导出。</p>
+        <details class="export-preview" id="preview" hidden>
+          <summary>预览导出文本</summary>
+          <textarea id="report" rows="8" aria-label="导出文本" readonly></textarea>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <script id="field-app">
+    const STOPS = [
+      {
+        id: 'green', time: '09:15', duration: '09:15–10:05', label: '生豆采购',
+        merchant: '咖纪 A3T046-1／2 · 备选巴新咖啡 A3T044-1',
+        objective: '拿一条国内现货的真实采购路径，问清谁持货和谁交货。',
+        questions: [
+          ['适合做日常意式拼配的生豆是哪款？', '记产地、处理法、批次，以及谁持库存、从哪里发货。'],
+          ['样品和正式采购分别怎么下单？', '记最小起订量、含税运到货价（元／公斤）、交期和报价有效期。'],
+          ['下一批如果变了，怎么验收或补货？', '问样品与大货的一致性、缺货替代、退换由谁负责。'],
+        ],
+      },
+      {
+        id: 'roasted', time: '10:05', duration: '10:05–10:45', label: '商用熟豆',
+        merchant: '思晨咖啡 A3021／A3024',
+        objective: '按每月约 54 公斤熟豆的例子，问出一条门店直接买熟豆的路径。',
+        questions: [
+          ['你会推荐哪一款店用熟豆？', '说明主要做奶咖或美式。记单一产地或拼配、烘焙程度、打样方式。'],
+          ['每月约 54 公斤，可以怎样补货？', '记样品和批量价、起订量、是否含税运、每周到货条件。'],
+          ['换季时怎样让前后几批出杯一致？', '问谁烘焙、如何验收、批次如何追溯，以及能否接代烘。'],
+        ],
+      },
+      {
+        id: 'processed', time: '10:45', duration: '10:45–11:20', label: '冻干与原液',
+        merchant: '左也咖啡（巴新咖啡附近，号待核） · 备选瑞幸即享 A3T008',
+        objective: '比较买熟豆、冻干或浓缩液，到门店以后分别还要做什么。',
+        questions: [
+          ['你们能交付哪些产品，谁负责加工？', '记下给到的产品形态、自有工厂或委外，以及起订量。'],
+          ['做一杯同规格的饮品，要用多少冻干或浓缩液？', '记每克或每毫升价格、每杯用量、每包能冲几杯。'],
+          ['从出厂到开封后使用，有哪些交付条件？', '记未开封与开封后的保存期、是否要冷链、常规交期。'],
+        ],
+      },
+      {
+        id: 'cup', time: '11:20', duration: '11:20–11:45', label: '现场出杯',
+        merchant: 'Bonanza A4011 · 备选巡游咖啡 A4032',
+        objective: '记一款实际喝到或看到的出品，再问一个能落到日常经营的数字。',
+        questions: [
+          ['这杯用了什么豆，怎么出杯？', '记产区、烘焙程度、用量和冲煮方式。现场能看清的就记。'],
+          ['店里长期卖得稳的是哪一款？', '问平时成交价、复购客群和日常销量区间。记清是否是展会限定。'],
+          ['日常把这杯做稳定，最大的难点是什么？', '可问换豆、调机、清洗、峰值出杯速度或做完未售的损耗。'],
+        ],
+      },
+    ];
+
+    const SUMMARY_FIELDS = {
+      insight: '改变判断的现场发现',
+      project: '项目可行性的初步判断',
+      trip: '学习行程的初步判断',
+    };
+    const EVIDENCE = ['亲眼观察', '展商口述', '报价单、照片或实物', '待复核'];
+    const STORAGE_KEY = 'xmcf-field-notes-2026-v1';
+
+    function textValue(value) {
+      return typeof value === 'string' ? value : '';
+    }
+
+    function normalizeState(saved) {
+      const active = STOPS.some((stop) => stop.id === saved?.active) ? saved.active : STOPS[0].id;
+      const visits = Object.fromEntries(STOPS.map((stop) => {
+        const visit = saved?.visits?.[stop.id];
+        return [stop.id, {
+          done: visit?.done === true,
+          merchant: textValue(visit?.merchant),
+          evidence: EVIDENCE.includes(visit?.evidence) ? visit.evidence : '',
+          answers: stop.questions.map((_, index) => textValue(visit?.answers?.[index])),
+          extra: textValue(visit?.extra),
+        }];
+      }));
+      const summary = Object.fromEntries(Object.keys(SUMMARY_FIELDS).map((key) => [key, textValue(saved?.summary?.[key])]));
+      return { active, visits, summary };
+    }
+
+    function hasNotes(visit) {
+      return [visit.merchant, visit.evidence, visit.extra, ...visit.answers].some((value) => value.trim());
+    }
+
+    function renderReport(state) {
+      const lines = ['# 2026 厦门咖啡展走访记录', '', '2026-11-22 · 厦门国际会展中心 A3–A4 馆'];
+      for (const stop of STOPS) {
+        const visit = state.visits[stop.id];
+        if (!visit.done && !hasNotes(visit)) continue;
+        lines.push('', `## ${stop.label}`, '', `- 走访状态：${visit.done ? '已完成' : '已记录'}`);
+        lines.push(`- 展商或展位：${visit.merchant.trim() || `实际对象未填写（计划：${stop.merchant}）`}`);
+        if (visit.evidence) lines.push(`- 主要信息来源：${visit.evidence}`);
+        for (const [index, [question]] of stop.questions.entries()) {
+          const answer = visit.answers[index].trim();
+          if (answer) lines.push('', `**${question}**`, '', answer);
+        }
+        if (visit.extra.trim()) lines.push('', '**补充记录**', '', visit.extra.trim());
+      }
+      for (const [key, title] of Object.entries(SUMMARY_FIELDS)) {
+        if (state.summary[key].trim()) lines.push('', `## ${title}`, '', state.summary[key].trim());
+      }
+      return `${lines.join('\n')}\n`;
+    }
+
+    function start() {
+      const byId = (id) => document.getElementById(id);
+      const network = byId('network');
+      const visitPanel = byId('visit');
+      const exportStatus = byId('export-status');
+      const preview = byId('preview');
+      const report = byId('report');
+      let storageAvailable = true;
+      let offlineReady = false;
+      let existing = null;
+      try {
+        existing = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      } catch {
+        storageAvailable = false;
+      }
+      const state = normalizeState(existing);
+
+      function updateNotice() {
+        network.dataset.error = String(!storageAvailable);
+        network.textContent = storageAvailable
+          ? `记录保存在当前浏览器${offlineReady ? '，可离线填写' : ''}。`
+          : '浏览器暂时无法保留记录。请在关闭页面前复制或下载。';
+      }
+
+      function updateIndicators() {
+        const count = STOPS.filter((stop) => state.visits[stop.id].done).length;
+        byId('count').textContent = `已完成 ${count} / ${STOPS.length}`;
+        byId('progress').value = count;
+        for (const button of byId('route-list').querySelectorAll('button')) {
+          const id = button.dataset.visit;
+          const visit = state.visits[id];
+          const status = visit.done ? '已完成' : hasNotes(visit) ? '已记录' : '待走访';
+          const label = `${button.querySelector('.stop-name').textContent}，${status}`;
+          button.setAttribute('aria-current', String(id === state.active));
+          button.setAttribute('aria-label', label);
+          button.querySelector('.stop-state').dataset.state = visit.done ? 'done' : hasNotes(visit) ? 'started' : '';
+        }
+        const canExport = count > 0 || Object.values(state.visits).some(hasNotes) || Object.values(state.summary).some((value) => value.trim());
+        byId('copy').disabled = !canExport;
+        byId('download').disabled = !canExport;
+        preview.hidden = !canExport;
+        report.value = canExport ? renderReport(state) : '';
+        exportStatus.dataset.error = 'false';
+        exportStatus.textContent = canExport ? '导出后可直接发回原对话。' : '填写一条记录或勾选一站后即可导出。';
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          storageAvailable = true;
+        } catch {
+          storageAvailable = false;
+        }
+        updateNotice();
+        updateIndicators();
+      }
+
+      function renderVisit() {
+        const stop = STOPS.find((item) => item.id === state.active);
+        const visit = state.visits[stop.id];
+        const finalStop = stop === STOPS.at(-1);
+        visitPanel.innerHTML = `
+          <div class="visit-head">
+            <div><h2 id="visit-title" tabindex="-1">${stop.label}</h2><p>${stop.merchant}</p></div>
+            <span class="duration">${stop.duration}</span>
+          </div>
+          <p class="objective">${stop.objective}</p>
+          <div class="form-grid">
+            <label><span class="field-label">实际展商／展位</span><input type="text" id="merchant" placeholder="记录实际访谈对象"></label>
+            <label><span class="field-label">主要信息来源</span><select id="evidence"><option value="">点此选择</option>${EVIDENCE.map((item) => `<option>${item}</option>`).join('')}</select></label>
+          </div>
+          <ol class="questions">
+            ${stop.questions.map(([question, hint], index) => `
+              <li class="question">
+                <label class="question-title" for="answer-${index}"><span class="question-number" aria-hidden="true">${index + 1}.</span><span>${question}</span></label>
+                <p class="hint" id="hint-${index}">${hint}</p>
+                <textarea id="answer-${index}" rows="2" aria-describedby="hint-${index}" placeholder="记下现场回答"></textarea>
+              </li>`).join('')}
+          </ol>
+          <details class="extra"${visit.extra ? ' open' : ''}>
+            <summary>补充记录</summary>
+            <textarea id="extra" rows="2" aria-label="补充记录" placeholder="自己的追问、其他观察、照片编号或待核线索"></textarea>
+          </details>
+          <div class="visit-actions">
+            <label class="check"><input type="checkbox" id="done">这一站已完成</label>
+            <button type="button" class="btn" id="next">${finalStop ? '去中午收尾' : '下一站'}</button>
+          </div>`;
+
+        function bind(id, value, update, event = 'input') {
+          const field = byId(id);
+          field.value = value;
+          field.addEventListener(event, () => { update(field.value); save(); });
+        }
+
+        bind('merchant', visit.merchant, (value) => { visit.merchant = value; });
+        bind('evidence', visit.evidence, (value) => { visit.evidence = value; }, 'change');
+        visit.answers.forEach((answer, index) => bind(`answer-${index}`, answer, (value) => { visit.answers[index] = value; }));
+        bind('extra', visit.extra, (value) => { visit.extra = value; });
+        byId('done').checked = visit.done;
+        byId('done').addEventListener('change', (event) => { visit.done = event.target.checked; save(); });
+        byId('next').addEventListener('click', () => {
+          if (finalStop) {
+            byId('summary').scrollIntoView({ block: 'start' });
+            byId('insight').focus({ preventScroll: true });
+          } else {
+            selectVisit(STOPS[STOPS.indexOf(stop) + 1].id);
+          }
+        });
+        visitPanel.hidden = false;
+      }
+
+      function selectVisit(id) {
+        state.active = id;
+        renderVisit();
+        save();
+        visitPanel.scrollIntoView({ block: 'start' });
+        byId('visit-title').focus({ preventScroll: true });
+      }
+
+      byId('route-list').innerHTML = STOPS.map((stop) => `
+        <li><button type="button" class="stop-button" data-visit="${stop.id}">
+          <span class="stop-time">${stop.time}</span><span class="stop-name">${stop.label}</span>
+          <span class="stop-state" aria-hidden="true"></span>
+        </button></li>`).join('');
+      byId('route-list').addEventListener('click', (event) => {
+        const button = event.target.closest('[data-visit]');
+        if (button && state.active !== button.dataset.visit) selectVisit(button.dataset.visit);
+        else if (button) visitPanel.scrollIntoView({ block: 'start' });
+      });
+
+      for (const key of Object.keys(SUMMARY_FIELDS)) {
+        const field = byId(key);
+        field.value = state.summary[key];
+        field.addEventListener('input', () => { state.summary[key] = field.value; save(); });
+      }
+
+      byId('copy').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(report.value);
+          exportStatus.dataset.error = 'false';
+          exportStatus.textContent = '已复制。可以粘贴到原对话或备忘录。';
+        } catch {
+          preview.open = true;
+          report.focus();
+          report.select();
+          exportStatus.dataset.error = 'true';
+          exportStatus.textContent = '浏览器未允许自动复制。已选中文本，可以手动复制。';
+        }
+      });
+
+      byId('download').addEventListener('click', () => {
+        const url = URL.createObjectURL(new Blob([report.value], { type: 'text/markdown;charset=utf-8' }));
+        const download = document.createElement('a');
+        download.href = url;
+        download.download = '2026-11-22-厦门咖啡展走访记录.md';
+        document.body.append(download);
+        download.click();
+        download.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        exportStatus.dataset.error = 'false';
+        exportStatus.textContent = '已发起下载。';
+      });
+
+      renderVisit();
+      save();
+      if ('serviceWorker' in navigator && window.isSecureContext) {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => navigator.serviceWorker.ready)
+          .then(() => { offlineReady = true; updateNotice(); })
+          .catch(() => {});
+      }
+    }
+
+    if (typeof document !== 'undefined') start();
+  </script>
+</body>
+</html>
