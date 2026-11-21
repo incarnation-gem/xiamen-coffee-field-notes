@@ -72,9 +72,59 @@
     .map-dialog::backdrop { background: rgb(16 34 28 / .65); }
     .map-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
     .map-header form, .map-figure { margin: 0; }
-    .map-image-link { display: block; }
     .map-image { display: block; width: 100%; height: auto; border-radius: 6px; }
     .map-caption { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem 1rem; margin-top: .75rem; color: var(--muted); font-size: .85rem; }
+    .mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem; }
+    .mode-switch .btn[aria-pressed="true"] { background: var(--action); color: white; }
+    .mode-switch .btn[aria-pressed="true"]:hover { background: var(--action-hover); }
+    .route > .map { margin-top: .35rem; }
+    .map-tools, .booth-head, .booth-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+    .map-tools { margin-bottom: .45rem; }
+    .map-tools .btn[aria-pressed="true"] { background: var(--selected); }
+    .map-help { margin: .35rem 0 .65rem; color: var(--muted); font-size: .85rem; }
+    .map-window { overflow: auto; max-height: 55vh; max-height: 55dvh; overscroll-behavior: contain; border-radius: 6px; }
+    .map-stage { position: relative; width: 100%; }
+    .map-stage .map-image { border-radius: 0; user-select: none; }
+    .map-stage[data-picking="true"] .map-image { cursor: crosshair; }
+    .map-marker {
+      position: absolute; display: grid; place-items: center; width: 1.5rem; height: 1.5rem;
+      padding: 0; translate: -50% -50%; border: 2px solid white; border-radius: 50%;
+      background: var(--forest); color: white; box-shadow: 0 2px 5px rgb(18 52 41 / .36);
+    }
+    .map-marker::after { content: ""; width: .26rem; height: .26rem; background: currentColor; border-radius: 50%; }
+    .map-marker[data-recorded="true"] { background: var(--lime); color: var(--ink); }
+    .map-marker[data-draft="true"] { outline: 2px solid var(--action); pointer-events: none; }
+    .map-marker:hover, .map-marker:focus-visible { z-index: 1; }
+    .map-stage[data-picking="true"] .map-marker { pointer-events: none; }
+    .booth-head { justify-content: space-between; }
+    .booth-head h2 { margin: 0; font-size: 1.65rem; letter-spacing: -.025em; }
+    .booth-count { color: var(--muted); font-size: .86rem; }
+    .booth-search { margin: 1rem 0 .7rem; }
+    .booth-list { list-style: none; margin: .5rem 0 0; padding: 0; border-top: 1px solid var(--line); }
+    .booth-list li { border-bottom: 1px solid var(--line); }
+    .booth-row {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; width: 100%; gap: .5rem; align-items: center;
+      min-height: 3.45rem; padding: .63rem .35rem; border: 0; text-align: left; background: transparent; color: var(--ink);
+    }
+    .booth-row:hover { background: var(--selected); }
+    .booth-row span { display: block; min-width: 0; overflow-wrap: anywhere; }
+    .booth-row-title { display: block; font-weight: 680; }
+    .booth-row-meta { font-size: .83rem; color: var(--muted); }
+    .booth-row-status { color: var(--action); font-size: .82rem; text-align: right; }
+    .booth-actions { margin-top: .85rem; }
+    .booth-actions .btn { text-decoration: none; }
+    .booth-empty { margin: .8rem 0; color: var(--muted); }
+    .booth-editor { border-top: 1px solid var(--line); padding-top: .8rem; }
+    .booth-editor h3 { font-size: 1.12rem; margin: 0 0 .35rem; }
+    .booth-field { display: block; margin-top: .85rem; }
+    .booth-kinds { margin: .8rem 0 0; border: 0; padding: 0; min-width: 0; }
+    .booth-tags { display: flex; flex-wrap: wrap; gap: .42rem; }
+    .booth-tags .check { border: 1px solid var(--line); padding-inline: .45rem; border-radius: 7px; font-size: .85rem; }
+    .booth-tags .check:has(:checked) { border-color: var(--action); background: var(--selected); }
+    .booth-tags input { width: 1rem; height: 1rem; }
+    .booth-clue, .position-status { color: var(--muted); font-size: .85rem; }
+    .position-status { min-width: 0; overflow-wrap: anywhere; }
+    .booth-section + .sheet[hidden] + .sheet, .booth-section[hidden] + .sheet + .sheet { margin-top: 1rem; }
     .route-list { list-style: none; margin: 0; padding: 0; border-block: 1px solid var(--line); }
     .route-list li + li { border-top: 1px solid var(--line); }
     .stop-button {
@@ -156,6 +206,7 @@
       .stop-state { grid-column: 2; grid-row: 1 / span 2; }
       .sheet { padding: 1rem; }
       .visit-head h2 { font-size: 1.4rem; }
+      .booth-head h2 { font-size: 1.4rem; }
       .sheet + .sheet { margin-top: 1rem; }
       .network { margin-top: .5rem; }
     }
@@ -178,20 +229,74 @@
   </header>
   <noscript><p class="wrap no-script">请用浏览器打开并启用 JavaScript，以填写和保存走访记录。</p></noscript>
   <div class="wrap layout">
-    <nav class="route" aria-labelledby="route-title">
-      <div class="route-head">
-        <h2 id="route-title">走访待办</h2>
-        <span class="counter" id="count">已完成 0 / 4</span>
-      </div>
-      <progress id="progress" max="4" value="0" aria-label="走访完成进度"></progress>
+    <aside class="route">
+      <nav class="mode-switch" aria-label="调研方式">
+        <button type="button" class="btn" id="show-booths" aria-pressed="true" aria-controls="booths">展位普查</button>
+        <button type="button" class="btn" id="show-interviews" aria-pressed="false" aria-controls="visit">重点访谈</button>
+      </nav>
       <a class="map" id="open-map" href="./floor-map.webp" aria-haspopup="dialog" aria-controls="floor-map">
-        展会地图 <span class="map-label">A3–A4 馆展位分布</span>
+        展会地图 <span class="map-label">看展位或标位置</span>
       </a>
-      <ul class="route-list" id="route-list"></ul>
+      <nav id="interview-route" aria-labelledby="route-title" hidden>
+        <div class="route-head">
+          <h2 id="route-title">重点走访</h2>
+          <span class="counter" id="count">已完成 0 / 4</span>
+        </div>
+        <progress id="progress" max="4" value="0" aria-label="走访完成进度"></progress>
+        <ul class="route-list" id="route-list"></ul>
+      </nav>
       <span class="network" id="network" role="status">记录保存在这台设备的当前浏览器。</span>
-    </nav>
+    </aside>
 
     <main>
+      <section class="sheet booth-section" id="booths" aria-labelledby="booths-title">
+        <div class="booth-head">
+          <div><h2 id="booths-title" tabindex="-1">逐摊记录</h2><span class="booth-count" id="booth-count"></span></div>
+          <button type="button" class="btn primary" id="add-booth">新增展位</button>
+        </div>
+        <p class="status" id="booth-status" role="status" hidden></p>
+        <div id="booth-browser">
+          <div class="form-grid booth-search">
+            <label><span class="field-label">找展位</span><input type="text" id="booth-search" placeholder="展位号、商家或品类"></label>
+            <label><span class="field-label">查看范围</span><select id="booth-filter">
+              <option value="all">全部</option><option value="guide">展前名单 · 待访</option>
+              <option value="visited">已记录</option><option value="follow-up">待回访</option>
+            </select></label>
+          </div>
+          <ul class="booth-list" id="booth-list"></ul>
+          <p class="booth-empty" id="booth-empty" hidden></p>
+          <button type="button" class="btn booth-actions" id="booth-more" hidden>显示更多展位</button>
+        </div>
+        <form id="booth-editor" class="booth-editor" hidden>
+          <h3 id="booth-editor-title" tabindex="-1">新增展位</h3>
+          <p id="booth-clue" class="booth-clue" hidden></p>
+          <div class="form-grid">
+            <label><span class="field-label">展位号</span><input type="text" name="booth" placeholder="如 A3T046-1"></label>
+            <label><span class="field-label">商家名称</span><input type="text" name="name" placeholder="照展位招牌记录"></label>
+          </div>
+          <fieldset class="booth-kinds">
+            <legend class="field-label">现场看到的品类</legend>
+            <div id="booth-kinds" class="booth-tags"></div>
+          </fieldset>
+          <label class="booth-field"><span class="field-label">一句现场观察</span><textarea name="notes" rows="2" placeholder="主打产品、实际在售款，或最值得记的一点"></textarea></label>
+          <details class="extra" id="booth-deep">
+            <summary>补充采购细节</summary>
+            <label class="booth-field"><span class="field-label">售价与采购条件</span><textarea name="trade" rows="2" placeholder="品项、规格、单价、起订量、税运、交期"></textarea></label>
+            <label class="booth-field"><span class="field-label">来源与复访线索</span><textarea name="evidence" rows="2" placeholder="谁说的、产品单或照片编号、后续要问什么"></textarea></label>
+          </details>
+          <div class="booth-actions">
+            <button type="button" class="btn" id="place-booth">在地图标位置</button>
+            <span class="position-status" id="booth-position"></span>
+            <label class="check"><input type="checkbox" name="followUp">待回访</label>
+          </div>
+          <p class="status" id="booth-error" role="status" hidden></p>
+          <div class="booth-actions">
+            <button type="submit" class="btn primary" value="save">保存这家</button>
+            <button type="submit" class="btn" value="next">保存并记下一家</button>
+            <button type="button" class="btn" id="cancel-booth">取消编辑</button>
+          </div>
+        </form>
+      </section>
       <section class="sheet" id="visit" aria-labelledby="visit-title" hidden></section>
       <section class="sheet" id="summary" aria-labelledby="summary-title">
         <h2 class="section-title" id="summary-title">中午收尾</h2>
@@ -229,10 +334,18 @@
       <form method="dialog"><button class="btn" type="submit" autofocus>关闭</button></form>
     </div>
     <figure class="map-figure">
-      <a class="map-image-link" href="./floor-map.webp" target="_blank" rel="noopener noreferrer" aria-label="打开大图，在新标签页放大查看">
-        <img class="map-image" src="./floor-map.webp" width="1346" height="768" loading="lazy" decoding="async"
-          alt="厦门咖啡展 A3–A4 全场展位图，标有客商登记处、生豆区、设备器具区、品牌区、国际区和咖啡馆区">
-      </a>
+      <div class="map-tools">
+        <button type="button" class="btn" id="map-in">放大</button>
+        <button type="button" class="btn" id="map-out">缩小</button>
+        <button type="button" class="btn" id="map-add" aria-pressed="false">在图上新增</button>
+      </div>
+      <p class="map-help" id="map-help" role="status"></p>
+      <div class="map-window" id="map-window" tabindex="0" aria-label="可滚动展馆地图">
+        <div class="map-stage" id="map-stage">
+          <img class="map-image" id="map-image" src="./floor-map.webp" width="1346" height="768" loading="lazy" draggable="false" decoding="async"
+            alt="厦门咖啡展 A3–A4 全场展位图，标有客商登记处、生豆区、设备器具区、品牌区、国际区和咖啡馆区">
+        </div>
+      </div>
       <figcaption class="map-caption">
         <a class="btn primary" href="./floor-map.webp" target="_blank" rel="noopener noreferrer">打开大图</a>
         <a href="https://www.xiaohongshu.com/user/profile/6073fb500000000001008666" target="_blank" rel="noopener noreferrer">来源：主办方逛展指南第 3 张</a>
@@ -240,6 +353,7 @@
     </figure>
   </dialog>
 
+  <script src="./booths.js"></script>
   <script id="field-app">
     const STOPS = [
       {
@@ -309,7 +423,8 @@
         }];
       }));
       const summary = Object.fromEntries(Object.keys(SUMMARY_FIELDS).map((key) => [key, textValue(saved?.summary?.[key])]));
-      return { active, visits, summary };
+      const { booths, boothDraft } = BOOTH_SURVEY.normalize(saved);
+      return { active, visits, summary, booths, boothDraft };
     }
 
     function hasNotes(visit) {
@@ -318,6 +433,7 @@
 
     function renderReport(state) {
       const lines = ['# 2026 厦门咖啡展走访记录', '', '2026-11-22 · 厦门国际会展中心 A3–A4 馆'];
+      lines.push(...BOOTH_SURVEY.reportLines(state.booths));
       for (const stop of STOPS) {
         const visit = state.visits[stop.id];
         if (!visit.done && !hasNotes(visit)) continue;
@@ -346,19 +462,22 @@
       let storageAvailable = true;
       let offlineReady = false;
       let existing = null;
-      byId('open-map').addEventListener('click', (event) => {
-        const map = byId('floor-map');
-        if (typeof map.showModal === 'function') {
-          event.preventDefault();
-          map.showModal();
-        }
-      });
       try {
         existing = JSON.parse(localStorage.getItem(STORAGE_KEY));
       } catch {
         storageAvailable = false;
       }
       const state = normalizeState(existing);
+
+      function showMode(mode, focus = false) {
+        const isSurvey = mode === 'booths';
+        byId('booths').hidden = !isSurvey;
+        byId('visit').hidden = isSurvey;
+        byId('interview-route').hidden = isSurvey;
+        byId('show-booths').setAttribute('aria-pressed', String(isSurvey));
+        byId('show-interviews').setAttribute('aria-pressed', String(!isSurvey));
+        if (focus) byId(isSurvey ? 'booths-title' : 'visit-title').focus();
+      }
 
       function updateNotice() {
         network.dataset.error = String(!storageAvailable);
@@ -380,13 +499,13 @@
           button.setAttribute('aria-label', label);
           button.querySelector('.stop-state').dataset.state = visit.done ? 'done' : hasNotes(visit) ? 'started' : '';
         }
-        const canExport = count > 0 || Object.values(state.visits).some(hasNotes) || Object.values(state.summary).some((value) => value.trim());
+        const canExport = state.booths.length > 0 || count > 0 || Object.values(state.visits).some(hasNotes) || Object.values(state.summary).some((value) => value.trim());
         byId('copy').disabled = !canExport;
         byId('download').disabled = !canExport;
         preview.hidden = !canExport;
         report.value = canExport ? renderReport(state) : '';
         exportStatus.dataset.error = 'false';
-        exportStatus.textContent = canExport ? '导出后可直接发回原对话。' : '填写一条记录或勾选一站后即可导出。';
+        exportStatus.textContent = canExport ? '导出已保存的展位和访谈记录。' : '保存一家展位或填写一条访谈后即可导出。';
       }
 
       function save() {
@@ -507,11 +626,21 @@
       });
 
       renderVisit();
+      BOOTH_SURVEY.mount({ state, save, showMode });
+      byId('show-booths').addEventListener('click', () => showMode('booths', true));
+      byId('show-interviews').addEventListener('click', () => showMode('interviews', true));
+      showMode('booths');
       save();
       if ('serviceWorker' in navigator && window.isSecureContext) {
+        const checkOffline = async () => {
+          const asset = new URL('./booths.js', location.href);
+          offlineReady = !!(await caches.match(asset.href));
+          updateNotice();
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', () => checkOffline().catch(() => {}));
         navigator.serviceWorker.register('./sw.js')
           .then(() => navigator.serviceWorker.ready)
-          .then(() => { offlineReady = true; updateNotice(); })
+          .then(checkOffline)
           .catch(() => {});
       }
     }
