@@ -65,6 +65,16 @@
     }
     .map:hover { text-decoration: underline; }
     .map-label { color: var(--muted); font-size: .8rem; }
+    .map-dialog {
+      width: min(64rem, calc(100% - 1.5rem)); max-width: none; max-height: 90vh; max-height: 90dvh;
+      padding: 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink);
+    }
+    .map-dialog::backdrop { background: rgb(16 34 28 / .65); }
+    .map-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
+    .map-header form, .map-figure { margin: 0; }
+    .map-image-link { display: block; }
+    .map-image { display: block; width: 100%; height: auto; border-radius: 6px; }
+    .map-caption { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem 1rem; margin-top: .75rem; color: var(--muted); font-size: .85rem; }
     .route-list { list-style: none; margin: 0; padding: 0; border-block: 1px solid var(--line); }
     .route-list li + li { border-top: 1px solid var(--line); }
     .stop-button {
@@ -174,8 +184,8 @@
         <span class="counter" id="count">已完成 0 / 4</span>
       </div>
       <progress id="progress" max="4" value="0" aria-label="走访完成进度"></progress>
-      <a class="map" href="https://www.xiaohongshu.com/user/profile/6073fb500000000001008666" target="_blank" rel="noopener noreferrer">
-        找展位图 <span class="map-label">主办方逛展指南第 3 张</span>
+      <a class="map" id="open-map" href="./floor-map.webp" aria-haspopup="dialog" aria-controls="floor-map">
+        展会地图 <span class="map-label">A3–A4 馆展位分布</span>
       </a>
       <ul class="route-list" id="route-list"></ul>
       <span class="network" id="network" role="status">记录保存在这台设备的当前浏览器。</span>
@@ -212,6 +222,23 @@
       </section>
     </main>
   </div>
+
+  <dialog class="map-dialog" id="floor-map" aria-labelledby="map-title">
+    <div class="map-header">
+      <h2 class="section-title" id="map-title">A3–A4 馆展会地图</h2>
+      <form method="dialog"><button class="btn" type="submit" autofocus>关闭</button></form>
+    </div>
+    <figure class="map-figure">
+      <a class="map-image-link" href="./floor-map.webp" target="_blank" rel="noopener noreferrer" aria-label="打开大图，在新标签页放大查看">
+        <img class="map-image" src="./floor-map.webp" width="1346" height="768" loading="lazy" decoding="async"
+          alt="厦门咖啡展 A3–A4 全场展位图，标有客商登记处、生豆区、设备器具区、品牌区、国际区和咖啡馆区">
+      </a>
+      <figcaption class="map-caption">
+        <a class="btn primary" href="./floor-map.webp" target="_blank" rel="noopener noreferrer">打开大图</a>
+        <a href="https://www.xiaohongshu.com/user/profile/6073fb500000000001008666" target="_blank" rel="noopener noreferrer">来源：主办方逛展指南第 3 张</a>
+      </figcaption>
+    </figure>
+  </dialog>
 
   <script id="field-app">
     const STOPS = [
@@ -319,6 +346,13 @@
       let storageAvailable = true;
       let offlineReady = false;
       let existing = null;
+      byId('open-map').addEventListener('click', (event) => {
+        const map = byId('floor-map');
+        if (typeof map.showModal === 'function') {
+          event.preventDefault();
+          map.showModal();
+        }
+      });
       try {
         existing = JSON.parse(localStorage.getItem(STORAGE_KEY));
       } catch {

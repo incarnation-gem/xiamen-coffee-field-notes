@@ -1,9 +1,11 @@
 const CACHE_PREFIX = 'xmcf-field-notes-';
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const ENTRY = new URL('./', self.registration.scope).href;
+const MAP = new URL('./floor-map.webp', ENTRY).href;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.add(ENTRY)).then(() => self.skipWaiting()));
+  const assets = [ENTRY, MAP].map((url) => new Request(url, { cache: 'reload' }));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(assets)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -15,6 +17,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.url === MAP) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      return (await cache.match(MAP)) || fetch(event.request);
+    })());
+    return;
+  }
   const url = new URL(event.request.url);
   const canonical = new URL(ENTRY);
   const entryPaths = [canonical.pathname, `${canonical.pathname}index.html`];
