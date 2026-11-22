@@ -54,6 +54,11 @@
     .route { position: sticky; top: 1.25rem; min-width: 0; }
     .route-head { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; }
     .route h2, .section-title { font-size: 1.25rem; line-height: 1.35; margin: 0; letter-spacing: -.02em; }
+    .route-intro { margin: .55rem 0 .7rem; color: var(--muted); font-size: .85rem; }
+    .route-rule { margin: .6rem 0; font-size: .85rem; color: var(--muted); }
+    .route-rule summary { min-height: 2.75rem; display: list-item; padding-block: .65rem; color: var(--action); cursor: pointer; }
+    .route-rule p { margin: .1rem 0 .6rem; }
+    .route-wrap-up { display: inline-flex; align-items: center; min-height: 2.75rem; font-size: .85rem; }
     .counter { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
     progress { display: block; width: 100%; height: .35rem; border: 0; border-radius: 1rem; margin: .55rem 0 .8rem; appearance: none; background: var(--line); }
     progress::-webkit-progress-bar { background: var(--line); border-radius: 1rem; }
@@ -64,7 +69,6 @@
       color: var(--action); margin-block: .1rem .35rem; text-decoration: none;
     }
     .map:hover { text-decoration: underline; }
-    .map-label { color: var(--muted); font-size: .8rem; }
     .map-dialog {
       width: min(64rem, calc(100% - 1.5rem)); max-width: none; max-height: 90vh; max-height: 90dvh;
       padding: 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink);
@@ -77,7 +81,8 @@
     .mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem; }
     .mode-switch .btn[aria-pressed="true"] { background: var(--action); color: white; }
     .mode-switch .btn[aria-pressed="true"]:hover { background: var(--action-hover); }
-    .route > .map { margin-top: .35rem; }
+    .route-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1rem; margin-block: .35rem .5rem; }
+    .route-links .map { margin: 0; }
     .map-tools, .booth-head, .booth-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
     .map-tools { margin-bottom: .45rem; }
     .map-tools .btn[aria-pressed="true"] { background: var(--selected); }
@@ -137,6 +142,7 @@
     .stop-button:focus-visible { position: relative; outline-offset: -2px; }
     .stop-time { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
     .stop-name { font-size: .925rem; font-weight: 680; line-height: 1.35; }
+    .stop-name small { display: block; margin-top: .13rem; font-size: .76rem; font-weight: 500; color: var(--muted); overflow-wrap: anywhere; }
     .stop-state { width: .92rem; height: .92rem; border: 1px solid var(--control); border-radius: 50%; justify-self: end; position: relative; }
     .stop-state[data-state="started"] { border-color: var(--action); background: var(--lime); }
     .stop-state[data-state="done"] { border-color: var(--action); background: var(--action); }
@@ -152,6 +158,11 @@
     .visit-head p { margin: .35rem 0 0; color: var(--muted); font-size: .875rem; }
     .duration { font-size: .8rem; color: var(--action); background: var(--selected); padding: .26rem .55rem; border-radius: 5px; font-variant-numeric: tabular-nums; }
     .objective { margin: .75rem 0 1rem; color: var(--ink); max-width: 36rem; }
+    .quick-note { margin: .7rem 0 1.05rem; }
+    .quick-note .field-label { font-size: .95rem; }
+    .quick-note p { margin: .25rem 0 .52rem; font-size: .84rem; color: var(--muted); }
+    .quick-note textarea { min-height: 6rem; }
+    .quick-actions { margin-bottom: 1rem; }
     .form-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: .75rem; }
     .field-label { display: block; font-size: .86rem; font-weight: 680; margin-bottom: .3rem; }
     input[type="text"], select, textarea {
@@ -231,25 +242,32 @@
   <div class="wrap layout">
     <aside class="route">
       <nav class="mode-switch" aria-label="调研方式">
-        <button type="button" class="btn" id="show-booths" aria-pressed="true" aria-controls="booths">展位普查</button>
-        <button type="button" class="btn" id="show-interviews" aria-pressed="false" aria-controls="visit">重点访谈</button>
+        <button type="button" class="btn" id="show-interviews" aria-pressed="true" aria-controls="visit">今日路线</button>
+        <button type="button" class="btn" id="show-booths" aria-pressed="false" aria-controls="booths">展位档案</button>
       </nav>
-      <a class="map" id="open-map" href="./floor-map.webp" aria-haspopup="dialog" aria-controls="floor-map">
-        展会地图 <span class="map-label">看展位或标位置</span>
-      </a>
+      <div class="route-links">
+        <a class="map" id="open-map" href="./floor-map.webp" aria-haspopup="dialog" aria-controls="floor-map">展会地图</a>
+        <a class="map" id="quick-note-link" href="#extra">记一段</a>
+      </div>
       <nav id="interview-route" aria-labelledby="route-title" hidden>
         <div class="route-head">
-          <h2 id="route-title">重点走访</h2>
-          <span class="counter" id="count">已完成 0 / 4</span>
+          <h2 id="route-title">代表样本</h2>
+          <span class="counter" id="count">已完成 0 / 5</span>
         </div>
-        <progress id="progress" max="4" value="0" aria-label="走访完成进度"></progress>
+        <progress id="progress" max="5" value="0" aria-label="走访完成进度"></progress>
+        <p class="route-intro">09:00 入场先看地图。时间紧，优先咖纪、左也和思晨。</p>
         <ul class="route-list" id="route-list"></ul>
+        <details class="route-rule">
+          <summary>遇到同类展商怎么选？</summary>
+          <p>同产地、同交付形态、同供货方式，先看一家。要比报价时再找第二家，按同品项、规格、数量与税运条件记录。</p>
+        </details>
+        <a class="route-wrap-up" href="#summary">11:40–12:00 收尾和导出</a>
       </nav>
       <span class="network" id="network" role="status">记录保存在这台设备的当前浏览器。</span>
     </aside>
 
     <main>
-      <section class="sheet booth-section" id="booths" aria-labelledby="booths-title">
+      <section class="sheet booth-section" id="booths" aria-labelledby="booths-title" hidden>
         <div class="booth-head">
           <div><h2 id="booths-title" tabindex="-1">逐摊记录</h2><span class="booth-count" id="booth-count"></span></div>
           <button type="button" class="btn primary" id="add-booth">新增展位</button>
@@ -278,7 +296,7 @@
             <legend class="field-label">现场看到的品类</legend>
             <div id="booth-kinds" class="booth-tags"></div>
           </fieldset>
-          <label class="booth-field"><span class="field-label">一句现场观察</span><textarea name="notes" rows="2" placeholder="主打产品、实际在售款，或最值得记的一点"></textarea></label>
+          <label class="booth-field"><span class="field-label">现场速记 · 可用键盘听写</span><textarea name="notes" rows="2" placeholder="主打产品、实际在售款，或最值得记的一点"></textarea></label>
           <details class="extra" id="booth-deep">
             <summary>补充采购细节</summary>
             <label class="booth-field"><span class="field-label">售价与采购条件</span><textarea name="trade" rows="2" placeholder="品项、规格、单价、起订量、税运、交期"></textarea></label>
@@ -300,7 +318,12 @@
       <section class="sheet" id="visit" aria-labelledby="visit-title" hidden></section>
       <section class="sheet" id="summary" aria-labelledby="summary-title">
         <h2 class="section-title" id="summary-title">中午收尾</h2>
-        <p class="summary-intro">记下现场最重要的变化，导出已填写的走访记录。</p>
+        <p class="summary-intro">先核对两条带单位和交付条件的数字，再记下一条改变判断的现场发现。</p>
+        <div class="tools">
+          <button type="button" class="btn primary" id="copy" disabled>复制调研记录</button>
+          <button type="button" class="btn" id="download" disabled>下载 Markdown</button>
+        </div>
+        <p class="status" id="export-status" role="status">填写一条记录后即可导出。</p>
         <div class="summary-fields">
           <label>
             <span class="field-label">哪件事改变了你原先的判断？</span>
@@ -315,11 +338,6 @@
             <textarea id="trip" rows="2" placeholder="上午学到了什么，接下来最想去哪家看厂或复访"></textarea>
           </label>
         </div>
-        <div class="tools">
-          <button type="button" class="btn primary" id="copy" disabled>复制调研记录</button>
-          <button type="button" class="btn" id="download" disabled>下载 Markdown</button>
-        </div>
-        <p class="status" id="export-status" role="status">填写一条记录或勾选一站后即可导出。</p>
         <details class="export-preview" id="preview" hidden>
           <summary>预览导出文本</summary>
           <textarea id="report" rows="8" aria-label="导出文本" readonly></textarea>
@@ -357,7 +375,7 @@
   <script id="field-app">
     const STOPS = [
       {
-        id: 'green', time: '09:15', duration: '09:15–10:05', label: '生豆采购',
+        id: 'green', time: '09:15', duration: '09:15–09:45', label: '生豆采购', routeName: '咖纪 · A3T046-1／2',
         merchant: '咖纪 A3T046-1／2 · 备选巴新咖啡 A3T044-1',
         objective: '拿一条国内现货的真实采购路径，问清谁持货和谁交货。',
         questions: [
@@ -367,17 +385,17 @@
         ],
       },
       {
-        id: 'roasted', time: '10:05', duration: '10:05–10:45', label: '商用熟豆',
-        merchant: '思晨咖啡 A3021／A3024',
-        objective: '按每月约 54 公斤熟豆的例子，问出一条门店直接买熟豆的路径。',
+        id: 'origin', time: '09:45', duration: '09:45–10:10', label: '产地出口', routeName: 'Kilole · 国际区，可选',
+        merchant: '埃塞俄比亚 Kilole（国际区，展位号待核） · 找不到可去乌干达 A3T010 问出口商对接',
+        objective: '问清产地直接下单以后，谁负责进口和国内交货。找不到负责采购的人，可以跳到下一站。',
         questions: [
-          ['你会推荐哪一款店用熟豆？', '说明主要做奶咖或美式。记单一产地或拼配、烘焙程度、打样方式。'],
-          ['每月约 54 公斤，可以怎样补货？', '记样品和批量价、起订量、是否含税运、每周到货条件。'],
-          ['换季时怎样让前后几批出杯一致？', '问谁烘焙、如何验收、批次如何追溯，以及能否接代烘。'],
+          ['你们卖的是哪个产区、庄园或批次？', '记产地和处理法，问能否试样。'],
+          ['中国的小买家向谁下单、谁交货？', '记签约对象、进口商、国内库存、最小订单和交期。'],
+          ['下一批不同或到货异常，怎么处理？', '问谁负责验收和索赔，以及能不能换批次或找国内现货。'],
         ],
       },
       {
-        id: 'processed', time: '10:45', duration: '10:45–11:20', label: '冻干与原液',
+        id: 'processed', time: '10:10', duration: '10:10–10:40', label: '冻干与原液', routeName: '左也 · 巴新咖啡附近',
         merchant: '左也咖啡（巴新咖啡附近，号待核） · 备选瑞幸即享 A3T008',
         objective: '比较买熟豆、冻干或浓缩液，到门店以后分别还要做什么。',
         questions: [
@@ -387,8 +405,18 @@
         ],
       },
       {
-        id: 'cup', time: '11:20', duration: '11:20–11:45', label: '现场出杯',
-        merchant: 'Bonanza A4011 · 备选巡游咖啡 A4032',
+        id: 'roasted', time: '10:40', duration: '10:40–11:15', label: '商用熟豆', routeName: '思晨 · A3021／A3024',
+        merchant: '思晨咖啡 A3021／A3024',
+        objective: '按每月约 54 公斤熟豆的例子，问出一条门店直接买熟豆的路径。',
+        questions: [
+          ['你会推荐哪一款店用熟豆？', '说明主要做奶咖或美式。记单一产地或拼配、烘焙程度、打样方式。'],
+          ['每月约 54 公斤，可以怎样补货？', '记样品和批量价、起订量、是否含税运、每周到货条件。'],
+          ['换季时怎样让前后几批出杯一致？', '问谁烘焙、如何验收、批次如何追溯，以及能否接代烘。'],
+        ],
+      },
+      {
+        id: 'cup', time: '11:15', duration: '11:15–11:40', label: '现场出杯', routeName: '巡游 · A4032',
+        merchant: '巡游咖啡 A4032 · 备选 Bonanza A4011（精品豆和手冲）',
         objective: '记一款实际喝到或看到的出品，再问一个能落到日常经营的数字。',
         questions: [
           ['这杯用了什么豆，怎么出杯？', '记产区、烘焙程度、用量和冲煮方式。现场能看清的就记。'],
@@ -444,7 +472,7 @@
           const answer = visit.answers[index].trim();
           if (answer) lines.push('', `**${question}**`, '', answer);
         }
-        if (visit.extra.trim()) lines.push('', '**补充记录**', '', visit.extra.trim());
+        if (visit.extra.trim()) lines.push('', '**现场速记**', '', visit.extra.trim());
       }
       for (const [key, title] of Object.entries(SUMMARY_FIELDS)) {
         if (state.summary[key].trim()) lines.push('', `## ${title}`, '', state.summary[key].trim());
@@ -529,6 +557,15 @@
             <span class="duration">${stop.duration}</span>
           </div>
           <p class="objective">${stop.objective}</p>
+          <div class="quick-note">
+            <label class="field-label" for="extra">现场速记 · 可语音听写</label>
+            <p id="dictation-help">点下面这格，再点手机键盘的麦克风。说完核对店名、数字和单位，文字会自动保存。</p>
+            <textarea id="extra" rows="3" aria-describedby="dictation-help" placeholder="可直接说：我在……，对方交付的是……，起订量和价格是……，还要确认……"></textarea>
+          </div>
+          <div class="visit-actions quick-actions">
+            <label class="check"><input type="checkbox" id="done">这一站已完成</label>
+            <button type="button" class="btn" id="next">${finalStop ? '去中午收尾' : '下一站'}</button>
+          </div>
           <div class="form-grid">
             <label><span class="field-label">实际展商／展位</span><input type="text" id="merchant" placeholder="记录实际访谈对象"></label>
             <label><span class="field-label">主要信息来源</span><select id="evidence"><option value="">点此选择</option>${EVIDENCE.map((item) => `<option>${item}</option>`).join('')}</select></label>
@@ -540,15 +577,7 @@
                 <p class="hint" id="hint-${index}">${hint}</p>
                 <textarea id="answer-${index}" rows="2" aria-describedby="hint-${index}" placeholder="记下现场回答"></textarea>
               </li>`).join('')}
-          </ol>
-          <details class="extra"${visit.extra ? ' open' : ''}>
-            <summary>补充记录</summary>
-            <textarea id="extra" rows="2" aria-label="补充记录" placeholder="自己的追问、其他观察、照片编号或待核线索"></textarea>
-          </details>
-          <div class="visit-actions">
-            <label class="check"><input type="checkbox" id="done">这一站已完成</label>
-            <button type="button" class="btn" id="next">${finalStop ? '去中午收尾' : '下一站'}</button>
-          </div>`;
+          </ol>`;
 
         function bind(id, value, update, event = 'input') {
           const field = byId(id);
@@ -583,7 +612,7 @@
 
       byId('route-list').innerHTML = STOPS.map((stop) => `
         <li><button type="button" class="stop-button" data-visit="${stop.id}">
-          <span class="stop-time">${stop.time}</span><span class="stop-name">${stop.label}</span>
+          <span class="stop-time">${stop.time}</span><span class="stop-name">${stop.label}<small>${stop.routeName}</small></span>
           <span class="stop-state" aria-hidden="true"></span>
         </button></li>`).join('');
       byId('route-list').addEventListener('click', (event) => {
@@ -629,7 +658,12 @@
       BOOTH_SURVEY.mount({ state, save, showMode });
       byId('show-booths').addEventListener('click', () => showMode('booths', true));
       byId('show-interviews').addEventListener('click', () => showMode('interviews', true));
-      showMode('booths');
+      byId('quick-note-link').addEventListener('click', (event) => {
+        event.preventDefault();
+        showMode('interviews');
+        byId('extra').focus();
+      });
+      showMode('interviews');
       save();
       if ('serviceWorker' in navigator && window.isSecureContext) {
         const checkOffline = async () => {

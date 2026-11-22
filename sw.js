@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'xmcf-field-notes-';
-const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const CACHE_NAME = `${CACHE_PREFIX}v4`;
 const ENTRY = new URL('./', self.registration.scope).href;
 const STATIC_ASSETS = ['floor-map.webp', 'booths.js'].map((name) => new URL(name, ENTRY).href);
 
